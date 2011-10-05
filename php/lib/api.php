@@ -41,14 +41,18 @@ class TenFifteen {
         return self::$_ddrService;
     }
 
-    public static function getProperty($propertyName, $evidence=null, $vocabularyIRI=null) {
+    public static function getPropertyValue($propertyName, $evidence=null, $vocabularyIRI=null) {
         if (!$evidence) {
             $evidence = $_SERVER;
         }
         $ddrService = self::_getDDRService();
-        return $ddrService->getProperty($evidence, $propertyName, $vocabularyIRI);
+        return $ddrService->getPropertyValue($evidence, $propertyName, $vocabularyIRI);
     }
 
+    public static function listProperties($vocabularyIRI=null) {
+        $ddrService = self::_getDDRService();
+        return $ddrService->listProperties($vocabularyIRI);
+    }
 }
 
 

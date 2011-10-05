@@ -1,8 +1,12 @@
 <?php
 
+ini_set('display_errors', true);
+
 require('../lib/api.php');
 
-print 'applicationcache:';
-print( TenFifteen::getProperty('applicationcache') );
+foreach(TenFifteen::listProperties() as $property) {
+    print "<br/>$property: ";
+    print TenFifteen::getPropertyValue($property);
+}
 
 ?>

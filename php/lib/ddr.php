@@ -33,45 +33,38 @@ class DDRService {
                     $this->_evidenceProcessor['data'] = self::_parseVerySimpleYaml($this->_evidenceProcessor['data_file']);
                 }
                 foreach ($this->_evidenceProcessor['data']['user_agent_parsers'] as $parser) {
-                    $user_agent = self::_getEvidenceClues($evidence, array('HTTP_USER_AGENT'));
-                    $regex = $parser['regex'];
-                    $familyReplacement= isset($parser['family_replacement']) ? $parser['family_replacement'] : null;
-                    $v1Replacement= isset($parser['v1_replacement']) ? $parser['v1_replacement'] : null;
+                    $userAgent = self::_getEvidenceClues($evidence, array('HTTP_USER_AGENT', 'userAgent'));
+                    $family = $v1 = $v2 = $v3 = null;
 
-                    $family = null;
-                    $v1 = null;
-                    $v2 = null;
-                    $v3 = null;
-
-                    $match = array();
-
-                    return array(
-                        'userAgent'=>array (
-                            'family'=>'Chrome',
-                            'v1'=>'13',
-                            'v2'=>'0',
-                        )
-                    );
-                        //match = self.user_agent_re.search(user_agent_string)
-                        //if match:
-                        //  if self.family_replacement:
-                        //    if re.search(r'\$1', self.family_replacement):
-                        //      family = re.sub(r'\$1', match.group(1), self.family_replacement)
-                        //    else:
-                        //      family = self.family_replacement
-                        //  else:
-                        //    family = match.group(1)
-                        //
-                        //  if self.v1_replacement:
-                        //    v1 = self.v1_replacement
-                        //  elif match.lastindex >= 2:
-                        //    v1 = match.group(2)
-                        //
-                        //  if match.lastindex >= 3:
-                        //    v2 = match.group(3)
-                        //    if match.lastindex >= 4:
-                        //      v3 = match.group(4)
-                        //return family, v1, v2, v3
+                    preg_match("'".$parser['regex']."'", $userAgent, $match);
+                    if($match) {
+                        if (isset($parser['family_replacement'])) {
+                            $family = $parser['family_replacement'];
+                            if(stripos($family, '$1')) {
+                                $family = str_replace('$1', $match[1], $family);
+                            }
+                        } else {
+                            $family = $match[1];
+                        }
+                        if (isset($parser['major_version_replacement'])) {
+                            $v1 = $parser['major_version_replacement'];
+                        } elseif (isset($parser['v1_replacement'])) {
+                            $v1 = $parser['v1_replacement'];
+                        } elseif (sizeof($match)>2) {
+                            $v1 = $match[2];
+                        }
+                        if (sizeof($match)>3) {
+                            $v2 = $match[3];
+                            if (sizeof($match)>4) {
+                                $v3 = $match[4];
+                            }
+                        }
+                        if ($family) {
+                            return array(
+                                'userAgent'=>compact('family', 'v1', 'v2', 'v3')
+                            );
+                        }
+                    }
                 }
         }
     }
@@ -96,7 +89,11 @@ class DDRService {
                     $current_array[] = $current_object;
                 }
                 list($key, $value) = split(':', substr($line, 4), 2);
-                $data[$level1][$level2][trim($key)] = trim($value);
+                $value = trim($value);
+                if ($value[0] == "'" && substr($value, -1) == "'") {
+                    $value = substr($value, 1, -1);
+                }
+                $data[$level1][$level2][trim($key)] = $value;
             }
             fclose($handle);
         }
@@ -130,6 +127,10 @@ class DDRService {
 
     public static function arraySeek(&$array, $keys) {
         $key = array_shift($keys);
+        if (is_int($key)) {
+            $_keys = array_keys($array);
+            $key = $_keys[$key];
+        }
         if (!isset($array[$key])) {
             return;
         }
@@ -139,7 +140,7 @@ class DDRService {
         return $array[$key];
     }
 
-    public function getProperty($evidence, $propertyName, $vocabularyIRI=null) {
+    public function getPropertyValue($evidence, $propertyName, $vocabularyIRI=null) {
         $vocabulary = $this->_getVocabulary($vocabularyIRI);
         switch ($vocabulary['type']) {
             case 'browserscope_json':
@@ -167,6 +168,15 @@ class DDRService {
                 }
         }
 
+    }
+
+    public function listProperties($vocabularyIRI=null) {
+        $vocabulary = $this->_getVocabulary($vocabularyIRI);
+        switch ($vocabulary['type']) {
+            case 'browserscope_json':
+            default:
+                return array_keys(self::arraySeek($vocabulary['data'], array('results', 0, 'results')));
+        }
     }
 
 }

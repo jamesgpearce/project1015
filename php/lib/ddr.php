@@ -86,7 +86,6 @@ class DDRService {
                 if (substr($line, 0, 4) == '  - ') {
                     $level2++;
                     $data[$level1][$level2] = array();
-                    $current_array[] = $current_object;
                 }
                 list($key, $value) = split(':', substr($line, 4), 2);
                 $value = trim($value);

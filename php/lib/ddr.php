@@ -87,7 +87,7 @@ class DDRService {
                     $level2++;
                     $data[$level1][$level2] = array();
                 }
-                list($key, $value) = split(':', substr($line, 4), 2);
+                list($key, $value) = explode(':', substr($line, 4), 2);
                 $value = trim($value);
                 if ($value[0] == "'" && substr($value, -1) == "'") {
                     $value = substr($value, 1, -1);

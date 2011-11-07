@@ -1,24 +1,24 @@
 {
 
     "vocabularies": {
-        "screenProbe": {
+        "probeScreen": {
             "type":"probe",
             "probe":"screen.js"
         },
-        "modernizrProbe": {
+        "probeModernizr": {
             "type":"probe",
             "probe":"modernizr2.0.4.js"
         },
-        "modernizrBrowserscope": {
+        "browserscopeModernizr": {
             "type":"browserscope",
             "data":"modernizr2.0.4.json",
             "uaParser":"user_agent_parser.yaml"
         }
     },
     "vocabularyPriority": [
-        "screenProbe",
-        "modernizrProbe",
-        "modernizrBrowserscope"
+        "probeScreen",
+        "probeModernizr",
+        "browserscopeModernizr"
     ],
 
     "caches": {

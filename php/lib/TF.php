@@ -1,173 +1,162 @@
 <?php
 
-interface _TFC {
-    function get($genre, $name, $config=null);
-    function set($genre, $name, $object, $config=null);
-}
-interface _TFV {
-}
-
 class _TFConfigurable {
-    public function __construct($config=null) {
-        if ($config) {
-            $this->configure($config);
-        }
+    protected $_config;
+    public function __construct($config = null) {
+        $this->_configure($config);
     }
-    protected static function _configArguments($key){}
-    protected function configure($config=null) {
-        if (is_array($config)) {
-            foreach($config as $key=>$value) {
-                if (property_exists($this, $property="_$key")) {
-                    $this->$property = $value;
-                } elseif (
-                    ($altKey = $this->_configArguments($key)) &&
-                    property_exists($this, $property="_$altKey")
-                ) {
-                    $this->$property = $value;
-                }
-            }
-        }
+    protected function _configure($config = null) {
+        $this->_config = $config;
     }
 }
 
-class _TFInstantiator extends _TFConfigurable {
-    private $_cacher;
-    protected $_cachersLocation = 'cachers';
-    protected $_cachers = array(
-        'basic'=>'TFCBasic'
-    );
-    public function __construct($config=null) {
-        parent::__construct($config);
-        $this->_cacher = $this->_getCacher();
+class _TFCache extends _TFConfigurable {
+    protected static function _getLongKey($type, $key) {
+        return 'tf_' . md5(print_r(array(
+            'type'=>$type,
+            'key'=>$key
+        ), 1));
     }
-    protected function _getInstance($genre, $name=null, $useCache=true) {
-        $genreProperty = "_$genre";
-        $genreLocationProperty = "_${genre}Location";
-        if (!$name) {
-            foreach($this->_getInstanceNames($genre) as $name) {
-                try {
-                    return $this->_getInstance($genre, $name, $useCache);
-                } catch (Exception $e) {}
+    function isAvailable() {
+        return false;
+    }
+    public function get($type, $key) {}
+    public function set($type, $key, $value) {
+        return $value;
+    }
+}
+
+class _TFVocabulary extends _TFConfigurable {
+    protected $_cache;
+    protected function _configure($config = null) {
+        $this->_config = $config;
+        $this->_cache = $config['cache'];
+    }
+    private $_propertyNames;
+    protected function _getPropertyNames() {
+        return array();
+    }
+    final public function getPropertyNames() {
+        if (!isset($this->_propertyNames)) {
+            $this->_propertyNames = $this->_getPropertyNames();
+        }
+        return $this->_propertyNames;
+    }
+    private $_propertyValues;
+    protected function _getPropertyValue($name) {
+        return array();
+    }
+    final public function getPropertyValue($name) {
+        if (!isset($this->_propertyValues[$name])) {
+            $this->_propertyValues[$name] = $this->_getPropertyValue($name);
+        }
+        return $this->_propertyValues[$name];
+    }
+}
+
+final class TF extends _TFConfigurable {
+    private $_cache;
+    protected function _configure($config = null) {
+        $this->_config = $config ? $config : json_decode (
+            file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'TF.json'),
+            true
+        );
+        foreach($this->_config['cachePriority'] as $cacheName) {
+            $cache = $this->_getInstance('cache', $this->_config['caches'][$cacheName]);
+            if ($cache && $cache->isAvailable()) {
+                $this->_cache = $cache;
+                break;
             }
         }
-        $configs = $this->$genreProperty;
-        $config = $configs[$name];
-        if (is_array($config)) {
-            $className = array_shift($config);
-            if (sizeof($config)==1 && is_array($config[0])) {
-                $config = $config[0];
-            }
-        } else {
-            $className = $config;
-            $config = null;
-        }
-        if ($useCache) {
-            if ($object = $this->_cacher->get($genre, $name, $config)) {
-                return $object;
-            }
-        }
+    }
+    private function _getInstance($type, $config) {
+        $className = $this->_getClass($type, $config['type']);
+        $instance = new $className;
+        $instance->_configure($config);
+        return $instance;
+    }
+    private function _getClass($type, $subtype) {
+        $className = 'TF' .
+            strtoupper($type[0]) . substr($type, 1) .
+            strtoupper($subtype[0]) . substr($subtype, 1);
         if (!class_exists($className)) {
-            include_once($this->$genreLocationProperty . "/$className.php");
+            include_once(
+                (substr($type, -1)=='y' ?
+                    substr($type, 0, -1) . 'ies' :
+                    $type . 's'
+                ) . DIRECTORY_SEPARATOR . $className . '.php'
+            );
         }
-        $object = new $className;
-        $object->configure($config);
-        if ($useCache) {
-            $this->_cacher->set($genre, $name, $object, $config);
-        }
-        return $object;
+        return $className;
     }
-    protected function _getInstanceNames($genre) {
-        $genreProperty = "_$genre";
-        return array_keys($this->$genreProperty);
-    }
-    protected function _getInstances($genre, $useCache=true) {
-        $instances = array();
-        foreach ($this->_getInstanceNames($genre) as $name) {
-            $instance = $this->_getInstance($genre, $name, $useCache);
-            if ($instance) {
-                $instances[] = $instance;
-            }
-        }
-        return $instances;
-    }
-    private function _getCachers() {
-        return $this->_getInstances('cachers', false);
-    }
-    private function _getCacher($name=null) {
-        return $this->_getInstance('cachers', $name, false);
-    }
-}
 
-class TF extends _TFInstantiator {
-    protected $_vocabulariesLocation = 'vocabularies';
-    protected $_vocabularies = array(
-        'modernizr'=>'TFVBrowserscope',
-        'modernizr2'=>array('TFVBrowserscope', 'modernizr2.0.4')
-    );
-
-    public function getVocabularies() {
-        return $this->_getInstances('vocabularies');
+    public function getCache() {
+        return $this->cache;
     }
+
     public function getVocabularyNames() {
-        return $this->_getInstanceNames('vocabularies');
+        return $this->_config['vocabularyPriority'];
     }
-    public function getVocabulary($name=null) {
-        return $this->_getInstance('vocabularies', $name);
+
+    private $_vocabularies = array();
+    public function getVocabulary($name) {
+        if (!isset($this->_vocabularies[$name])) {
+            $config = $this->_config['vocabularies'][$name];
+            $config['cache'] = $this->_cache;
+            $this->_vocabularies[$name] = $this->_getInstance('vocabulary', $config);
+        }
+        return $this->_vocabularies[$name];
+    }
+
+
+
+}
+class TFUtil {
+    public static function yamlDecode($yaml) {
+        return self::_verySimpleYamlDecode($yaml);
+    }
+
+    private static function _verySimpleYamlDecode($yaml) {
+        // does the least required for browserscope ua parser files
+        $data = array();
+        foreach (explode("\n", $yaml) as $line) {
+            if (!($trimmed_line=trim($line)) || $trimmed_line[0]=='#') {
+                continue;
+            }
+            if ($line[0] != ' ') {
+                $level1 = substr($trimmed_line, 0, -1);
+                $level2 = -1;
+                $data[$level1] = array();
+                continue;
+            }
+            if (substr($line, 0, 4) == '  - ') {
+                $level2++;
+                $data[$level1][$level2] = array();
+            }
+            list($key, $value) = explode(':', substr($line, 4), 2);
+            $value = trim($value);
+            if ($value[0] == "'" && substr($value, -1) == "'") {
+                $value = substr($value, 1, -1);
+            }
+            $data[$level1][$level2][trim($key)] = $value;
+        }
+        return $data;
+    }
+
+    public static function deepSeek(&$array, $keys) {
+        $key = array_shift($keys);
+        if (is_int($key)) {
+            $_keys = array_keys($array);
+            $key = $_keys[$key];
+        }
+        if (!isset($array[$key])) {
+            return;
+        }
+        if (sizeof($keys)) {
+            return self::deepSeek($array[$key], $keys);
+        }
+        return $array[$key];
     }
 }
-
-//    private static $_evidenceProcessors = array(
-//        'browserscope_yaml' => array (
-//            'name'=>'browserscope_yaml',
-//            'type'=>'browserscope_yaml',
-//            'data_file'=>'../../data/user_agent_parser.yaml'
-//        )
-//    );
-//    private static $_defaultEvidenceProcessor = 'browserscope_yaml';
-//
-//    private static $_vocabularies = array (
-//        'http://www.browserscope.org/user/tests/table/agt1YS1wcm9maWxlcnINCxIEVGVzdBib2KQGDA'=>array(
-//            'name'=>'modernizr2.0.4',
-//            'type'=>'browserscope_json',
-//            'data_file'=>'../../data/modernizr2.0.4.json'
-//        )
-//    );
-//    private static $_vocabularyAliases = array (
-//        'modernizr2'=>'http://www.browserscope.org/user/tests/table/agt1YS1wcm9maWxlcnINCxIEVGVzdBib2KQGDA'
-//    );
-//    private static $_defaultVocabularyIRI = 'modernizr2';
-//
-//    private static $_ddrService;
-//
-//    private static function _getDDRService() {
-//        if(!self::$_ddrService) {
-//            self::$_ddrService = new DDRService(
-//                self::$_defaultVocabularyIRI,
-//                array(
-//                    'evidenceProcessor' => self::$_evidenceProcessors[self::$_defaultEvidenceProcessor],
-//                    'vocabularies' => self::$_vocabularies,
-//                    'vocabularyAliases' => self::$_vocabularyAliases,
-//                )
-//            );
-//        }
-//        return self::$_ddrService;
-//    }
-//
-//    public static function getPropertyValue($propertyName, $evidence=null, $vocabularyIRI=null) {
-//        if (!$evidence) {
-//            $evidence = $_SERVER;
-//        }
-//        $ddrService = self::_getDDRService();
-//        return $ddrService->getPropertyValue($evidence, $propertyName, $vocabularyIRI);
-//    }
-//
-//    public static function listProperties($vocabularyIRI=null) {
-//        $ddrService = self::_getDDRService();
-//        return $ddrService->listProperties($vocabularyIRI);
-//    }
-//}
-//
-
-
 
 ?>

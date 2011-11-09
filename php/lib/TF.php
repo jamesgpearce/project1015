@@ -57,7 +57,11 @@ class _TFVocabulary extends _TFConfigurable {
 final class TF extends _TFConfigurable {
     private $_cache;
     protected function _configure($config = null) {
-        $this->_config = $config ? $config : json_decode (
+        $this->_config = $config ? (
+            is_string($config) ?
+            file_get_contents($config) :
+            $config
+        ) : json_decode (
             file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'TF.json'),
             true
         );
@@ -108,8 +112,20 @@ final class TF extends _TFConfigurable {
         return $this->_vocabularies[$name];
     }
 
-
-
+    public function getPropertyValue($propertyName, $vocabularyName=null) {
+        if ($vocabularyName && $vocabulary = $this->getVocabulary($vocabularyName)) {
+            $value = $vocabulary->getPropertyValue($propertyName);
+            if ($value !== null) {
+                return $value;
+            }
+        }
+        foreach ($this->getVocabularyNames as $vocabularyName) {
+            $value = $this->getVocabulary($vocabularyName)->getPropertyValue($propertyName);
+            if ($value !== null) {
+                return $value;
+            }
+        }
+    }
 }
 class TFUtil {
     public static function yamlDecode($yaml) {

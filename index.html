@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+    <head>
+       <title>Project 1015</title>
+    </head>
+
+    <body>
+        <h1>Project 1015</h1>
+
+        <h2>Introduction</h2>
+        <p>Project 1015 is designed to make it easy to identify and ascertain the capabilities of different browsers accessing a web server.</p>
+        <p>Amongst mobile users in particular, the sheer diversity of browsers and devices brings an unfortunate fact of life: that servers sometimes needs to know what's going to be possible on the client ahead of time.</p>
+        <p>To make the assessment about a web client's capabilities, a couple of key techniques are commonly used. One is client-side feature detection using JavaScript - as popularised by Modernizr, for example - and adapting a client-side application's behaviour accordingly.</p>
+        <p>Alternatively, you can beacon such client-side data back to the server (using a cookie, for example) so that subsequent responses can be adapted on the server-side.</p>
+        <p>A third technique is to look at HTTP headers sent by the device (the user-agent string in particular) then deduce the make, model and version of the browser and device from it, and then look up capabilities in a server-side capabilities database.</p>
+        <p>Project 1015 does not take a religious stance on which techniques are best, since circumstances will always prevail. Rather, it provides a framework and a consistent set of APIs to expose browser data, regardless of the way in which it has been deduced or gathered.</p>
+
+        <h2>Architecture</h2>
+        <p>Project 1015 is currently implemented as a PHP library, but over time, it's expected that it will be available on a variety of other popular server-side platforms.</p>
+        <p>Behind the API of this library lies a set of configured 'vocabularies' of browser capability information. These come in two broad types:</li>
+        <ul>
+            <li>vocabularies of static browser data which can be queried according to the headers sent by the browser, and</li>
+            <li>vocabularies of dynamically-detected properties deduced on the device and then returned to the server</li>
+        </ul>
+        <p>Vocabularies of the former type require data about different browsers to be present on the server. Currently, Project 1015 uses BrowserScope as a source of empirically-gathered data for this purpose.</p>
+        <p>Vocabularies of the latter type require a JavaScript 'probe' script to run on the browser and provision a cookie that the server can subsequently retrieve.</p>
+        <p>Project 1015 allows a web developer to use one, the other, or both approaches, as required. A query for a given property (say, screen size) can be attempted using a dynamic approach, and then fall back to a static approach if required.</p>
+
+        <h2>Usage</h2>
+        <p>Project 1015 exposes vocabularies, and vocabularies contain properties. A property has a specific value for a given browser. The API follows this simple model, as well as providing some convenience functions. The idea is that it should be as easy as possible to use the library's functionality, and for the API to stay out of the way, while being as performant as possible by default.</p>
+        <p>The basic API is as follows. Firstly, a page using Project 1015 needs to include and instantiate the library:</p>
+        <pre>require('../lib/TF.php');
+$tf = new TF();</pre>
+        <p>Here, of course, the path provided to the <code>require</code> statement needs to identify the location of the library. Instantiating the <code>TF</code> class as above will use its default TF.json configuration.</p>
+        <p>You can also pass the absolute location of an alternative configuration file (or the configuration itself as an associative array) to customize the library's behavior:</p>
+        <pre>require('../lib/TF.php');
+$tf = new TF(__DIR__ . DIRECTORY_SEPARATOR . 'MyConfig.json');</pre>
+        <p>See the section on configuration below to see what you can change, and why you might want to.</p>
+        <p>The instantiated library, <code>$tf</code> provides the method used to query a device's particular capabilities:</p>
+        <code>$tf->getPropertyValue('applicationcache'); // '1' or '0'</code>
+        <p>... which in this case will indicate whether HTML5 app cache manifests are supported by the requesting browser.</p>
+        <p>That's it.</p>
+        <p>But if you want to programmatically understand the data available through Project 1015, the TF object also provides a method to list all the vocabularies than can be queried:</p>
+        <pre>$tf->getVocabularyNames(); // 'modernizr', etc</pre>
+        <p>Each of these names can be passed back in to actually fetch vocabulary objects:</p>
+        <pre>$v = $tf->getVocabulary('modernizr');</pre>
+        <p>These vocabulary objects can then enumerate the names of all the properties they know about:</p>
+        <pre>$v->getPropertyNames(); // 'applicationcache', etc</pre>
+        <p>These names are then used to query the properties from that vocabulary explicitly:</p>
+        <pre>$v->getPropertyValue('applicationcache'); // '1' or '0'</pre>
+        <p>For most usage, however, the convenience <code>$tf->getPropertyValue()</code> function above will suffice. This looks at each vocabulary in turn, seeking the property required. The priority used to search through the different vocabularies is a configuration property, and you can also specify the name of a particular vocabulary as the second argument of this convenience method:</p>
+        <code>$tf->getPropertyValue('applicationcache', 'modernizr'); // '1' or '0'</code>
+
+
+        <h2>Configuration</h2>
+        <p>The library requires very little configuration, but can be set up in different ways according to how the web developer expects to query browser information.</p>
+        <p>The TF.json file provides the default configuration, and details which vocabularies are available to query, what their priorities are, how Project 1015 will cache results, and so on.</p>
+        <p>It's possible for a web developer to pass in alternative configuration when instantiating the TF library - either as a configuration array directly or by referencing an alternative configuration file.</p>
+        <pre>{
+
+    "vocabularies": {
+        "probeScreen": {
+            "type":"probe",
+            "probe":"screen.js"
+        },
+        "probeModernizr": {
+            "type":"probe",
+            "probe":"modernizr2.0.4.js"
+        },
+        "browserscopeModernizr": {
+            "type":"browserscope",
+            "data":"modernizr2.0.4.json",
+            "uaParser":"user_agent_parser.yaml"
+        }
+    },
+    "vocabularyPriority": [
+        "probeScreen",
+        "probeModernizr",
+        "browserscopeModernizr"
+    ],
+
+    "caches": {
+        "memcached": {
+            "type":"memcached"
+        },
+        "session": {
+            "type":"session"
+        },
+        "request": {
+            "type":"request"
+        }
+    },
+    "cachePriority": [
+        "memcached",
+        "session",
+        "request"
+    ]
+
+}</pre>
+        <p>What does this all mean?</p>
+
+
+
+    </body>
+</html>

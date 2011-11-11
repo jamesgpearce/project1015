@@ -66,16 +66,17 @@ final class TF extends _TFConfigurable {
             true
         );
         foreach($this->_config['cachePriority'] as $cacheName) {
-            $cache = $this->_getInstance('cache', $this->_config['caches'][$cacheName]);
+            $cache = $this->_getInstance('cache', $this->_config['caches'][$cacheName], $cacheName);
             if ($cache && $cache->isAvailable()) {
                 $this->_cache = $cache;
                 break;
             }
         }
     }
-    private function _getInstance($type, $config) {
+    private function _getInstance($type, $config, $name='') {
         $className = $this->_getClass($type, $config['type']);
         $instance = new $className;
+        $config['name'] = $name;
         $instance->_configure($config);
         return $instance;
     }
@@ -95,7 +96,7 @@ final class TF extends _TFConfigurable {
     }
 
     public function getCache() {
-        return $this->cache;
+        return $this->_cache;
     }
 
     public function getVocabularyNames() {
@@ -107,7 +108,7 @@ final class TF extends _TFConfigurable {
         if (!isset($this->_vocabularies[$name])) {
             $config = $this->_config['vocabularies'][$name];
             $config['cache'] = $this->_cache;
-            $this->_vocabularies[$name] = $this->_getInstance('vocabulary', $config);
+            $this->_vocabularies[$name] = $this->_getInstance('vocabulary', $config, $name);
         }
         return $this->_vocabularies[$name];
     }

@@ -3,11 +3,18 @@
     "vocabularies": {
         "probeScreen": {
             "type":"probe",
-            "probe":"screen.js"
+            "script":"screen.js",
+            "beacon":{
+                "result":"TFScreen"
+            }
         },
         "probeModernizr": {
             "type":"probe",
-            "probe":"modernizr2.0.4.js"
+            "script":"modernizr2.0.4.js",
+            "beacon":{
+                "result":"Modernizr",
+                "normalize":"v?'1':'0'"
+            }
         },
         "browserscopeModernizr": {
             "type":"browserscope",

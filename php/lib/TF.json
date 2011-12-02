@@ -1,20 +1,16 @@
 {
 
     "vocabularies": {
-        "probeScreen": {
+        "probeWindowScreen": {
             "type":"probe",
-            "script":"screen.js",
-            "beacon":{
-                "result":"TFScreen"
-            }
+            "result":"window.screen",
+            "reload":"false"
         },
         "probeModernizr": {
             "type":"probe",
             "script":"modernizr2.0.4.js",
-            "beacon":{
-                "result":"Modernizr",
-                "normalize":"v?'1':'0'"
-            }
+            "result":"Modernizr",
+            "normalize":"v?'1':'0'"
         },
         "browserscopeModernizr": {
             "type":"browserscope",
@@ -23,7 +19,7 @@
         }
     },
     "vocabularyPriority": [
-        "probeScreen",
+        "probeWindowScreen",
         "probeModernizr",
         "browserscopeModernizr"
     ],

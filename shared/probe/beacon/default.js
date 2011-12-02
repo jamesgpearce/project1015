@@ -1,23 +1,25 @@
 (function(){
     [SCRIPT];
     var r=[RESULT],
-        c='',
         o=[NESTED],
+        d=[RELOAD]
         k='[COOKIE]',
+        a='[ASSIGNOR]',
         u='[SEPARATOR]',
         v='[SUBSEPARATOR]',
         n=function(v){
             return [NORMALIZE];
         },
+        c='',
         f,g;
     for(f in r){
         if(r[0]=='_'){continue;}
         var t=typeof r[f];
         if(t[0]=='f'){continue;}
-        c+=(c?u:k+'=')+f+':';
+        c+=(c?u:k+'=')+f+a;
         if(o&&t[0]=='o'){
             for(g in r[f]){
-                c+=v+g+':'+n(r[f][g]);
+                c+=v+g+a+n(r[f][g]);
             }
         }else{
             c+=n(r[f]);
@@ -26,6 +28,6 @@
     c+=';path=/';
     try{
         document.cookie=c;
-        document.location.reload();
+        if(d){document.location.reload();}
     }catch(e){}
 })();

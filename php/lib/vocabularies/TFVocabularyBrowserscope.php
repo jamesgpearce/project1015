@@ -37,7 +37,13 @@ class TFVocabularyBrowserscope extends _TFVocabulary {
                 }
             }
         }
-        return $_propertyValue[$userAgent][$name];
+        if (isset($_propertyValue[$userAgent]) 
+            && array_key_exists($name, $_propertyValue[$userAgent]))
+        {
+            return $_propertyValue[$userAgent][$name];
+        }
+        
+        return false;
     }
 
     private $_data;

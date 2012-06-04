@@ -46,7 +46,7 @@ class TFVocabularyBrowserscope extends _TFVocabulary {
             $this->_data = $this->_cache->get('data', $this->_config);
             if (!$this->_data) {
                 $this->_data = json_decode(file_get_contents(implode(DIRECTORY_SEPARATOR, array(
-                    __DIR__, '..', '..', '..', 'shared', 'browserscope', $this->_config['data']
+                    dirname(__FILE__), '..', '..', '..', 'shared', 'browserscope', $this->_config['data']
                 ))), true);
                 $this->_cache->set('data', $this->_config, $this->_data);
             }
@@ -60,7 +60,7 @@ class TFVocabularyBrowserscope extends _TFVocabulary {
             $this->_uaParsers = $this->_cache->get('uaParser', $this->_config);
             if (!$this->_uaParsers) {
                 $this->_uaParsers = TFUtil::yamlDecode(file_get_contents(implode(DIRECTORY_SEPARATOR, array(
-                    __DIR__, '..', '..', '..', 'shared', 'browserscope', 'uaparser', $this->_config['uaParser']
+                    dirname(__FILE__), '..', '..', '..', 'shared', 'browserscope', 'uaparser', $this->_config['uaParser']
                 ))), true);
                 $this->_uaParsers = $this->_uaParsers['user_agent_parsers'];
                 $this->_cache->set('uaParser', $this->_config, $this->_uaParsers);

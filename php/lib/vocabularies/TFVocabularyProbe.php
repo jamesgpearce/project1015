@@ -25,12 +25,12 @@ class TFVocabularyProbe extends _TFVocabulary {
         if(!isset($this->_script)) {
             if($this->_config['scriptFile']) {
                 $this->_config['script'] = file_get_contents(implode(DIRECTORY_SEPARATOR, array(
-                    __DIR__, '..', '..', '..', 'shared', 'probe', $this->_config['scriptFile']
+                    dirname(__FILE__), '..', '..', '..', 'shared', 'probe', $this->_config['scriptFile']
                 )), true);
                 unset($this->_config['scriptFile']);
             }
             $this->_script = file_get_contents(implode(DIRECTORY_SEPARATOR, array(
-                __DIR__, '..', '..', '..', 'shared', 'probe', 'beacon', $this->_config['beacon']
+                dirname(__FILE__), '..', '..', '..', 'shared', 'probe', 'beacon', $this->_config['beacon']
             )), true);
             $this->_script = preg_replace('/\n\s*/','', $this->_script);
             foreach($this->_config as $key=>$value) {

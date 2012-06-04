@@ -57,23 +57,23 @@ class TFVocabularyProbe extends _TFVocabulary {
             $cookie = $_COOKIE[$this->_config['cookie']];
             foreach (explode($separator, $cookie) as $feature) {
                 list($name, $value) = explode(':', $feature, 2);
-      if ($value[0]=='/') {
-        $value_object = new stdClass();
-        foreach (explode('/', substr($value, 1)) as $sub_feature) {
-          list($sub_name, $sub_value) = explode(':', $sub_feature, 2);
-          $value_object->$sub_name = $sub_value;
-        }
-        $modernizr->$name = $value_object;
-      } else {
-        $modernizr->$name = $value;
-      }
-    }
-    return $modernizr;
-  }
-
+                if ($value[0]=='/') {
+                    $value_object = new stdClass();
+                    foreach (explode('/', substr($value, 1)) as $sub_feature) {
+                        list($sub_name, $sub_value) = explode(':', $sub_feature, 2);
+                        $value_object->$sub_name = $sub_value;
+                    }
+                    $modernizr->$name = $value_object;
+                } else {
+                    $modernizr->$name = $value;
+                }
+            }
+            return $modernizr;
         }
         return $this->_data;
     }
+    
+
 
 }
 

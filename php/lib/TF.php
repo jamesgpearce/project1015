@@ -62,7 +62,7 @@ final class TF extends _TFConfigurable {
             file_get_contents($config) :
             $config
         ) : json_decode (
-            file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'TF.json'),
+            file_get_contents(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'TF.json'),
             true
         );
         foreach($this->_config['cachePriority'] as $cacheName) {
